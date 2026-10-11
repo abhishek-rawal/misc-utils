@@ -12,7 +12,7 @@ A suite of tools for working with Mullvad WireGuard relays on OpenWrt:
 
 Fetches all WireGuard relay IPv4 addresses from the Mullvad API, pings each one, and sorts by latency.
 
-**Requirements:** Python 3, `ping`
+**Requirements:** `python`, `ping`
 
 **Usage:**
 ```bash
@@ -21,17 +21,64 @@ python3 mullvad-wg-latency.py --europe           # European countries only
 python3 mullvad-wg-latency.py --asia             # Asian countries only
 python3 mullvad-wg-latency.py --less-than 50     # below 50ms
 ```
+**Example:**
+```bash
+$ python3 mullvad-wg-latency.py --asia -lt 90
+[..]
+Filtered to 8 relays with latency < 90.0 ms
+
+====================================================================================================
+#    IPv4 Address         Name                      Country         Avg Latency    Loss    
+====================================================================================================
+1    146.70.199.130       sg-sin-wg-102             Singapore       64.9 ms        0%
+2    135.136.98.130       sg-sin-wg-103             Singapore       65.1 ms        0%
+3    138.199.60.28        sg-sin-wg-003             Singapore       65.8 ms        0%
+4    146.70.199.2         sg-sin-wg-101             Singapore       66.1 ms        0%
+5    98.98.47.130         my-kul-wg-001             Malaysia        72.3 ms        0%
+6    138.199.60.2         sg-sin-wg-001             Singapore       72.7 ms        0%
+7    162.128.129.98       my-kul-wg-002             Malaysia        74.5 ms        0%
+8    138.199.60.15        sg-sin-wg-002             Singapore       86.3 ms        0%
+====================================================================================================
+```
 
 ### 2. wg-openwrt-configurator
 
 Generates OpenWrt `config wireguard_*` blocks from Mullvad relay hostnames by looking up public keys and endpoint IPs from the Mullvad API.
 
-**Requirements:** Bash 4+, `curl`, `jq`
+**Requirements:** `bash`, `curl`, `jq`
 
 **Usage:**
 ```bash
 ./wg-openwrt-configurator -s wg0 nl-ams-wg-005
 ./wg-openwrt-configurator -s wg1 nl-ams-wg-005,de-ber-wg-001,us-atl-wg-001
+```
+**Example:**
+```bash
+$ ./wg-openwrt-configurator -s wg1 nl-ams-wg-005,de-ber-wg-001,us-atl-wg-001
+
+config wireguard_wg1
+    option description 'nl-ams-wg-005'
+    option public_key '33BoONMGCm2vknq2eq72eozRsHmHQY6ZHEEZ4851TkY='
+    list allowed_ips '0.0.0.0/0'
+    option route_allowed_ips '1'
+    option endpoint_host '193.32.249.70'
+    option endpoint_port '51820'
+
+config wireguard_wg1
+    option description 'de-ber-wg-001'
+    option public_key '0qSP0VxoIhEhRK+fAHVvmfRdjPs2DmmpOCNLFP/7cGw='
+    list allowed_ips '0.0.0.0/0'
+    option route_allowed_ips '1'
+    option endpoint_host '193.32.248.66'
+    option endpoint_port '51820'
+
+config wireguard_wg1
+    option description 'us-atl-wg-001'
+    option public_key 'nvyBkaEXHwyPBAm8spGB0TFzf2W5wPAl8EEuJ0t+bzs='
+    list allowed_ips '0.0.0.0/0'
+    option route_allowed_ips '1'
+    option endpoint_host '45.134.140.130'
+    option endpoint_port '51820'
 ```
 
 ## 3. wg-web-gui.py
@@ -59,6 +106,10 @@ python3 wg-web-gui.py --host 0.0.0.0 --port 8081
 - Dark theme (Sashiko/GitHub-inspired)
 - Server-owned badges (Mullvad-owned vs. partner)
 - Latency coloring: green (<50ms), yellow (50-150ms), red (>150ms)
+
+**Example:**
+  <img width="1910" height="1201" alt="Screenshot_20261011_222438" src="https://github.com/user-attachments/assets/071d1ea0-ff35-40e0-986e-64e40a5acfa8" />
+
 
 ## Typical Workflow
 
