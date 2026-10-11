@@ -8,7 +8,35 @@ A suite of tools for working with Mullvad WireGuard relays on OpenWrt:
 
 ## Tools
 
-### 1. mullvad-wg-latency.py
+## 1. wg-web-gui.py
+
+A zero-dependency web GUI combining both tools. Select a country, load servers, measure latency, and generate OpenWrt configs — all in your browser.
+
+**Requirements:** `python3`
+
+**Usage:**
+```bash
+python3 wg-web-gui.py --host 0.0.0.0 --port 8081
+```
+
+**Workflow:**
+1. Select a country from the dropdown
+2. Click **Load Servers** to fetch available relays
+3. Click **Ping Servers** to measure latency (up to 30 concurrent ICMP pings)
+4. Select one or more servers via checkboxes
+5. Click **Generate Config** to produce OpenWrt WireGuard blocks inline
+6. Click **Copy** to copy the config to clipboard
+
+**Features:**
+- Sortable columns — click any header (Hostname, City, Country, Provider, IPv4, Latency, Loss)
+- Dark theme (Sashiko/GitHub-inspired)
+- Server-owned badges (Mullvad-owned vs. partner)
+- Latency coloring: green (<50ms), yellow (50-150ms), red (>150ms)
+
+**Example:**
+  <img width="1910" height="1201" alt="Screenshot_20261011_222438" src="https://github.com/user-attachments/assets/071d1ea0-ff35-40e0-986e-64e40a5acfa8" />
+
+### 2. mullvad-wg-latency.py
 
 Fetches all WireGuard relay IPv4 addresses from the Mullvad API, pings each one, and sorts by latency.
 
@@ -41,7 +69,7 @@ Filtered to 8 relays with latency < 90.0 ms
 ====================================================================================================
 ```
 
-### 2. wg-openwrt-configurator
+### 3. wg-openwrt-configurator
 
 Generates OpenWrt `config wireguard_*` blocks from Mullvad relay hostnames by looking up public keys and endpoint IPs from the Mullvad API.
 
