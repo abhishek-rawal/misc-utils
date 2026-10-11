@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ENDPOINT="https://api.mullvad.net/www/relays/all/"
+PORT=51820
+
+usage() {
+    echo "Usage: $0 -s <wireguard-interface> <relay-hostnames>"
+    echo ""
+    echo "Options:"
+    echo "  -s    WireGuard interface name (e.g. wg0, wg1)"
+    echo ""
+    echo "Arguments:"
+    echo "  relay-hostnames   Comma-separated relay hostnames"
+    echo ""
+    echo "Examples:"
+    echo "  $0 -s wg0 nl-ams-wg-005"
+    echo "  $0 -s wg1 nl-ams-wg-005,de-ber-wg-001,us-atl-wg-001"
+    exit 1
+}
+
+if [ $# -eq 0 ]; then
+    usage
+fi
+
+RELAY_NAME=""
+
+while getopts "s:h" opt; do
+    case "$opt" in
+        s) WG_IFACE="$OPTARG" ;;
+        h) usage ;;
+        *) usage ;;
+    esac
+done
+
+shift $((OPTIND - 1))
+
+if [ -z "$WG_IFACE" ] || [ $# -eq 0 ]; then
+    echo "Error: Interface name and relay hostnames are required."
+    usage
+fi
+
+RELAY_NAMES_INPUT="$*"
+
+# Parse comma-separated names into an array
+IFS=',' read -ra RELAY_NAMES <<< "$RELAY_NAMES_INPUT"
+
+# Fetch relay data once
+RELAY_DATA=$(curl -sf --max-time 10 "$ENDPOINT")
+
+# Build lookup: hostname -> pubkey+ipv4
+LOOKUP=$(echo "$RELAY_DATA" | jq -r '
+    .[] | "\(.hostname)\t\(.pubkey)\t\(.ipv4_addr_in)"
+')
+
+for RELAY_NAME in "${RELAY_NAMES[@]}"; do
+
+    # Find relay in lookup
+    RELAY_LINE=$(echo "$LOOKUP" | grep -P "^\Q${RELAY_NAME}\E\t" || true)
+
+    if [ -z "$RELAY_LINE" ]; then
+        echo "Error: Relay '$RELAY_NAME' not found." >&2
+        exit 1
+    fi
+
+    PUBLIC_KEY=$(echo "$RELAY_LINE" | cut -f2)
+    ENDPOINT_HOST=$(echo "$RELAY_LINE" | cut -f3)
+
+    # Generate OpenWrt WireGuard config
+    echo
+    cat <<EOF
+config wireguard_${WG_IFACE}
+    option description '$RELAY_NAME'
+    option public_key '$PUBLIC_KEY'
+    list allowed_ips '0.0.0.0/0'
+    option route_allowed_ips '1'
+    option endpoint_host '$ENDPOINT_HOST'
+    option endpoint_port '$PORT'
+EOF
+done
